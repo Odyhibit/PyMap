@@ -228,13 +228,14 @@ class PyMap:
 
     def print_results(self):
         print()
-        print('{:^24s}'.format("***********"))
-        print('{:^24s}'.format("* results *"))
-        print('{:^24s}'.format("***********"))
+        print("*" * 32)
+        print("*           results            *")
+        print("*" * 32)
         for port, result in self.OpenPorts.items():
             print(port, " is ", result)
+        print("*" * 32)
         print()
-        print('{:^24s}'.format("***********"))
+
 
     #
     # Sets up the arguments for the application.
