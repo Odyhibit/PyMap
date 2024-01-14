@@ -32,6 +32,7 @@ class PyMap:
             print("Invalid argument set provided, provide at least one target.")
 
         self.defaultSocketTimeout = (float(self.Arguments['timeout']) / 1000)
+        print(f"Timeout set to {self.defaultSocketTimeout}")
 
         if self.IsTargetValid(self.Arguments['address']):
             # Scan here
@@ -84,18 +85,18 @@ class PyMap:
     #
     # Scans a single address for a list of ports. If multi-threaded is enabled, it will use a thread pool to scan the ports.
     #
-    def ScanAddress(self, address: str, portsToScan: list[int], multiThreaded: bool = False):
-        socketMode = socket.SOCK_STREAM
-        if (self.Arguments['mode'] == "UDP"):
-            socketMode = socket.SOCK_DGRAM
-
-        if (multiThreaded):
-            with ThreadPoolExecutor(max_workers=self.Arguments['threads']) as executor:
-                for aPort in portsToScan:
-                    executor.submit(self.ScanPort, address, aPort, socketMode)
-        else:
-            for aPort in portsToScan:
-                self.ScanPort(address, aPort, socketMode)
+    # def ScanAddress(self, address: str, portsToScan: list[int], multiThreaded: bool = False):
+    #     socketMode = socket.SOCK_STREAM
+    #     if (self.Arguments['mode'] == "UDP"):
+    #         socketMode = socket.SOCK_DGRAM
+    #
+    #     if (multiThreaded):
+    #         with ThreadPoolExecutor(max_workers=self.Arguments['threads']) as executor:
+    #             for aPort in portsToScan:
+    #                 executor.submit(self.ScanPort, address, aPort, socketMode)
+    #     else:
+    #         for aPort in portsToScan:
+    #             self.ScanPort(address, aPort, socketMode)
 
     #
     # Scans a single port on a single address. If the port is open, it will print the address and port to the console.
@@ -129,15 +130,19 @@ class PyMap:
     # based on the chosen number of threads.
     #
     def ProcessScans(self):
+        socketMode = socket.SOCK_STREAM
+        if self.Arguments['mode'] == "UDP":
+            socketMode = socket.SOCK_DGRAM
 
-        if (len(self.AddressList) == 1):
-            self.ScanAddress(self.AddressList[0], self.PortList, True)
-        else:
+        if self.Arguments['threads'] > 0:
             with ThreadPoolExecutor(max_workers=self.Arguments['threads']) as executor:
-                for item in self.AddressList:
-                    executor.submit(self.ScanAddress, item, self.PortList)
+                for address in self.AddressList:
+                    for port in self.PortList:
+                        executor.submit(self.ScanPort, address, port, socketMode)
+        else:
+            for port in self.PortList:
+                self.ScanPort(self.AddressList[0], port, socketMode)
 
-    #
     # Converts the network with CIDR notation to a list of addresses for
     # scanning. Skips over the network and broadcast address.
     #
